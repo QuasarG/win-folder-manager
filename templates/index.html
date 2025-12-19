@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Folder Master Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        .folder-row { transition: all 0.2s; }
+        .folder-row:hover { background-color: #e9ecef; }
+        .icon-preview { width: 24px; height: 24px; display: inline-block; vertical-align: middle; margin-right: 8px; }
+        .badge-soft { background-color: #e7f1ff; color: #0d6efd; border: 1px solid #cff4fc;}
+        /* 增加 loading 遮罩层样式 */
+        [v-cloak] { display: none; }
+    </style>
+</head>
+<body>
+    <div id="app" class="container py-4" v-cloak>
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="mb-0"><i class="fa-solid fa-folder-tree text-primary"></i> 文件夹管理器</h2>
+                <p class="text-muted small mb-0">当前路径: <strong>[[ config.root_path ]]</strong></p>
+            </div>
+            <div>
+                <button class="btn btn-outline-secondary me-2" @click="showConfigModal">
+                    <i class="fa-solid fa-gear"></i> 设置
+                </button>
+                <button class="btn btn-success" @click="refreshFolders">
+                    <i class="fa-solid fa-rotate-right"></i> 刷新列表
+                </button>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-body py-2">
+                <div class="d-flex gap-2">
+                    <button class="btn btn-warning btn-sm" @click="batchRelativeToAll">
+                        <i class="fa-solid fa-link"></i> 全部转为相对路径
+                    </button>
+                    <span class="text-muted small align-self-center ms-auto">
+                        <i class="fa-solid fa-info-circle"></i> 提示：修改配置后，资源管理器可能需要几秒钟刷新缓存。
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 20%">物理名称</th>
+                            <th style="width: 20%">显示别名</th>
+                            <th style="width: 15%">图标状态</th>
+                            <th style="width: 25%">备注 (InfoTip)</th>
+                            <th class="text-end">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="folder in folders" :key="folder.path" class="folder-row">
+                            <td class="font-monospace">[[ folder.name ]]</td>
+                            <td>
+                                <span v-if="folder.alias" class="fw-bold text-primary">[[ folder.alias ]]</span>
+                                <span v-else class="text-muted fst-italic">- 无别名 -</span>
+                            </td>
+                            <td>
+                                <span v-if="getIconAlias(folder.icon_path)" class="badge badge-soft">
+                                    [[ getIconAlias(folder.icon_path) ]]
+                                </span>
+                                <span v-else-if="folder.icon_path" class="badge bg-secondary">自定义图标</span>
+                                <span v-else class="badge bg-light text-dark border">默认</span>
+                            </td>
+                            <td class="small text-muted text-truncate" style="max-width: 200px;">
+                                [[ folder.infotip ]]
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-primary" @click="editFolder(folder)">
+                                        <i class="fa-solid fa-pen"></i> 编辑
+                                    </button>
+                                    <button class="btn btn-outline-secondary" @click="openPath(folder.path, 'explorer')" title="打开文件夹">
+                                        <i class="fa-regular fa-folder-open"></i>
+                                    </button>
+                                    <button class="btn btn-outline-dark" @click="openPath(folder.path, 'cmd')" title="打开 CMD">
+                                        <i class="fa-solid fa-terminal"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="modal fade" id="editModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">编辑属性: [[ currentFolder.name ]]</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">文件夹别名 (中文名)</label>
+                            <input type="text" class="form-control" v-model="editForm.alias" placeholder="例如：我的文档">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">项目备注 (InfoTip)</label>
+                            <textarea class="form-control" v-model="editForm.infotip" rows="2"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">选择图标</label>
+                            <select class="form-select" v-model="editForm.icon_path">
+                                <option value="">使用默认文件夹图标</option>
+                                <option v-for="icon in config.icons" :value="icon.path">
+                                    [[ icon.name ]] ([[ icon.path ]])
+                                </option>
+                            </select>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" v-model="editForm.use_relative" id="relPathCheck">
+                            <label class="form-check-label" for="relPathCheck">
+                                尝试使用相对路径保存 (便于移动)
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" @click="saveFolder">保存更改</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="configModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">全局设置</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">根目录路径</label>
+                            <input type="text" class="form-control" v-model="config.root_path">
+                        </div>
+                        
+                        <label class="form-label fw-bold">图标库管理</label>
+                        <table class="table table-bordered table-sm">
+                            <thead>
+                                <tr>
+                                    <th>图标别名</th>
+                                    <th>ICO 路径</th>
+                                    <th width="50">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(icon, idx) in config.icons">
+                                    <td><input type="text" class="form-control form-control-sm" v-model="icon.name"></td>
+                                    <td><input type="text" class="form-control form-control-sm" v-model="icon.path"></td>
+                                    <td><button class="btn btn-danger btn-sm" @click="removeIcon(idx)">×</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <button class="btn btn-outline-primary btn-sm" @click="addIcon">+ 添加新图标</button>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" @click="saveConfig">保存设置</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            // 关键修改：更改 Vue 的定界符，避免与 Flask Jinja2 冲突
+            compilerOptions: {
+                delimiters: ['[[', ']]']
+            },
+            data() {
+                return {
+                    config: { root_path: '', icons: [] },
+                    folders: [],
+                    currentFolder: {},
+                    editForm: {
+                        path: '',
+                        alias: '',
+                        infotip: '',
+                        icon_path: '',
+                        use_relative: true
+                    },
+                    modals: {
+                        edit: null,
+                        config: null
+                    }
+                }
+            },
+            mounted() {
+                // Initialize Bootstrap Modals
+                this.modals.edit = new bootstrap.Modal(document.getElementById('editModal'));
+                this.modals.config = new bootstrap.Modal(document.getElementById('configModal'));
+                
+                this.loadConfig().then(() => {
+                    this.refreshFolders();
+                });
+            },
+            methods: {
+                async loadConfig() {
+                    const res = await axios.get('/api/config');
+                    this.config = res.data;
+                },
+                async saveConfig() {
+                    await axios.post('/api/config', this.config);
+                    this.modals.config.hide();
+                    this.refreshFolders();
+                },
+                async refreshFolders() {
+                    const res = await axios.get('/api/folders');
+                    this.folders = res.data;
+                },
+                async openPath(path, mode) {
+                    await axios.post('/api/open', { path, mode });
+                },
+                editFolder(folder) {
+                    this.currentFolder = folder;
+                    
+                    // === 智能别名生成逻辑 ===
+                    let initialAlias = folder.alias || '';
+                    
+                    // 仅当当前没有别名时，才尝试自动生成
+                    if (!initialAlias) {
+                        // 正则解释：
+                        // ^        : 从头开始匹配
+                        // (\d{6})  : 捕获6位数字 (对应 YYMMDD)
+                        // _        : 紧接着一个下划线
+                        const dateMatch = folder.name.match(/^(\d{6})_/);
+                        
+                        if (dateMatch) {
+                            // dateMatch[1] 拿到的就是 '230214'
+                            // 根据你的需求，拼接成 '230214_'
+                            initialAlias = dateMatch[1] + '_';
+                            
+                            // 💡 如果你希望变成 "[230214] " 这种格式，可以改成:
+                            // initialAlias = `[${dateMatch[1]}] `;
+                        }
+                    }
+
+                    // Copy data to form
+                    this.editForm = {
+                        path: folder.path,
+                        alias: initialAlias, // 使用计算后的初始值
+                        infotip: folder.infotip || '',
+                        icon_path: folder.icon_path || '',
+                        use_relative: true
+                    };
+                    this.modals.edit.show();
+                },
+                async saveFolder() {
+                    await axios.post('/api/update', this.editForm);
+                    this.modals.edit.hide();
+                    this.refreshFolders();
+                },
+                async batchRelativeToAll() {
+                    if(!confirm('确定要将所有文件夹配置转换为相对路径吗？')) return;
+                    const res = await axios.post('/api/batch_relative');
+                    alert(`已处理 ${res.data.count} 个文件夹`);
+                    this.refreshFolders();
+                },
+                
+                // Config Icon Management
+                addIcon() {
+                    this.config.icons.push({ name: '新图标', path: '', index: 0 });
+                },
+                removeIcon(index) {
+                    this.config.icons.splice(index, 1);
+                },
+                showConfigModal() {
+                    this.modals.config.show();
+                },
+                
+                // Helpers
+                getIconAlias(path) {
+                    if (!path) return '';
+                    
+                    // === 强力标准化函数 ===
+                    // 1. 将所有反斜杠 \ 替换为 正斜杠 /
+                    // 2. 将连续的斜杠 // 替换为 单个 / (容错)
+                    // 3. 转为全小写 (Windows 不区分大小写)
+                    // 4. 去除首尾空格
+                    const standardize = (p) => {
+                        if (!p) return '';
+                        return p.toString()
+                                .replace(/\\/g, '/')   // 替换 \ 为 /
+                                .replace(/\/+/g, '/')  // 替换 // 为 /
+                                .toLowerCase()         // 转小写
+                                .trim();               // 去空格
+                    };
+
+                    // 1. 获取当前文件夹的标准化图标路径
+                    const currentPath = standardize(path);
+
+                    // 2. 遍历配置列表，逐个对比
+                    const found = this.config.icons.find(i => {
+                        const configPath = standardize(i.path);
+                        return currentPath === configPath;
+                    });
+                    
+                    return found ? found.name : '';
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
