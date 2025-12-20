@@ -16,7 +16,7 @@
 
 ---
 
-**Win Folder Manager** allows you to easily customize Windows folders by modifying their `desktop.ini` files through a clean Web UI. Set custom icons, aliases (localized names), and info tips without manually editing hidden system files.
+**Win Folder Manager** allows you to easily customize Windows folders through a clean Web UI. Set custom icons, aliases (localized names), and info tips without manually editing hidden system files.
 
 ## ✨ Features
 
