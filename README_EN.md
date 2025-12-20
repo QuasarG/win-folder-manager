@@ -10,7 +10,7 @@
 
 **A lightweight, web-based manager for Windows folder customization.**
 
-[中文文档](README.md) | [Features](#-features) • [Installation](#-installation) • [Usage](#-usage) • [Docker](#-docker-support) • [Development](#-development)
+[中文文档](README.md) | [Wiki](https://github.com/LinJHS/win-folder-manager/wiki) | [Features](#-features) • [Installation](#-installation) • [Usage](#-usage) • [Docker](#-docker-support) • [Development](#-development)
 
 </div>
 

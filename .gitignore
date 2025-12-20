@@ -13,3 +13,6 @@ build/
 # Packaging artifacts
 *.whl
 *.tar.gz
+
+# Wiki
+win-folder-manager.wiki/

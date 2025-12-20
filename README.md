@@ -10,7 +10,7 @@
 
 **一个轻量级的、基于 Web 的 Windows 文件夹自定义工具（desktop.ini 管理器）。**
 
-[English Version](README_EN.md) | [功能特性](#-功能特性) • [安装](#-安装) • [使用](#-使用) • [Docker](#-docker-支持) • [开发](#-开发)
+[English Version](README_EN.md) | [Wiki](https://github.com/LinJHS/win-folder-manager/wiki) | [功能特性](#-功能特性) • [安装](#-安装) • [使用](#-使用) • [Docker](#-docker-支持) • [开发](#-开发)
 
 </div>
 
