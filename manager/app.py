@@ -3,18 +3,27 @@ import json
 import webbrowser
 from threading import Timer
 from flask import Flask, render_template, jsonify, request
-from logic import FolderManager
+from .logic import FolderManager
 
-app = Flask(__name__)
+# Use APPDATA for persistent config storage
+APPDATA_DIR = os.path.join(os.environ.get('APPDATA', os.path.expanduser('~')), 'win-folder-manager')
+if not os.path.exists(APPDATA_DIR):
+    os.makedirs(APPDATA_DIR)
 
-# 配置文件的绝对路径
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CONFIG_FILE = os.path.join(BASE_DIR, 'config.json')
+CONFIG_FILE = os.path.join(APPDATA_DIR, 'config.json')
+
+# Templates are now inside the package
+TEMPLATE_FOLDER = os.path.join(os.path.dirname(__file__), 'templates')
+
+app = Flask(__name__, template_folder=TEMPLATE_FOLDER)
+
+# 初始化逻辑类
+folder_logic = FolderManager(CONFIG_FILE)
 
 
 def load_config():
     if not os.path.exists(CONFIG_FILE):
-        return {"root_path": "D:\\Project", "icons": []}
+        return {"root_path": "", "icons": []}
     with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
         return json.load(f)
 
@@ -22,10 +31,6 @@ def load_config():
 def save_config(data):
     with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
-
-
-# 初始化逻辑类
-folder_logic = FolderManager(CONFIG_FILE)
 
 
 @app.route('/')
@@ -99,7 +104,6 @@ def batch_relative():
     count = 0
     for folder in folders:
         if folder['has_ini']:
-            # 重新写入，开启 relative 开关
             folder_logic.update_folder(
                 folder['path'],
                 folder['alias'],
@@ -115,7 +119,11 @@ def open_browser():
     webbrowser.open_new("http://127.0.0.1:6800")
 
 
+def run(port=6800, debug=False, open_browser_on_start=True):
+    if open_browser_on_start:
+        Timer(1, open_browser).start()
+    app.run(port=port, debug=debug)
+
+
 if __name__ == '__main__':
-    # 启动后延时 1 秒打开浏览器
-    Timer(1, open_browser).start()
-    app.run(port=6800, debug=False)
+    run()

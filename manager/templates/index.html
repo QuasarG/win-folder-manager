@@ -139,13 +139,19 @@
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">全局设置</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <h5 class="modal-title">
+                            <span v-if="!config.root_path">👋 欢迎使用！请先配置</span>
+                            <span v-else>全局设置</span>
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" v-if="config.root_path"></button>
                     </div>
                     <div class="modal-body">
+                        <div class="alert alert-info" v-if="!config.root_path">
+                            <i class="fa-solid fa-circle-info"></i> 初次使用，请设置需要管理的<b>根目录路径</b>。
+                        </div>
                         <div class="mb-4">
                             <label class="form-label fw-bold">根目录路径</label>
-                            <input type="text" class="form-control" v-model="config.root_path">
+                            <input type="text" class="form-control" v-model="config.root_path" placeholder="例如: D:\MyData">
                         </div>
                         
                         <label class="form-label fw-bold">图标库管理</label>
@@ -212,7 +218,12 @@
                 this.modals.config = new bootstrap.Modal(document.getElementById('configModal'));
                 
                 this.loadConfig().then(() => {
-                    this.refreshFolders();
+                    if (!this.config.root_path) {
+                        // First run: Show config modal
+                        this.modals.config.show();
+                    } else {
+                        this.refreshFolders();
+                    }
                 });
             },
             methods: {
