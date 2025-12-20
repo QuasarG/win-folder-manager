@@ -28,7 +28,15 @@
 - 🚀 **Web Interface**: Simple Flask-based UI accessible from your browser.
 - 💾 **Persistent Config**: Configuration saved automatically in `%APPDATA%`.
 
-## 📦 Installation
+## � Screenshots
+
+| Home Dashboard | Edit Attributes |
+| :---: | :---: |
+| <img src="imgs/02-dashboard.png" width="100%"> | <img src="imgs/03-edit-attributes.png" width="100%"> |
+| **Configuration** | **Explorer Preview** |
+| <img src="imgs/01-configuration.png" width="100%"> | <img src="imgs/04-explorer-preview.png" width="100%"> |
+
+## �📦 Installation
 
 ### via PyPI (Recommended)
 
