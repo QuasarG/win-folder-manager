@@ -16,7 +16,7 @@
 
 ---
 
-**Win Folder Manager** allows you to easily customize Windows folders by modifying their `desktop.ini` files through a clean Web UI. Set custom icons, aliases (localized names), and info tips without manually editing hidden system files.
+**Win Folder Manager** allows you to easily customize Windows folders through a clean Web UI. Set custom icons, aliases (localized names), and info tips without manually editing hidden system files.
 
 ## ✨ Features
 
@@ -43,6 +43,11 @@ git clone https://github.com/LinJHS/win-folder-manager.git
 cd win-folder-manager
 pip install .
 ```
+
+> **Note**: If you are developing on Linux or Docker, use `requirements-docker.txt` to avoid `pywin32` installation errors:
+> ```bash
+> pip install -r requirements-docker.txt
+> ```
 
 ## 🚀 Usage
 

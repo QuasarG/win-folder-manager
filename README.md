@@ -8,7 +8,7 @@
 [![Python Versions](https://img.shields.io/pypi/pyversions/win-folder-manager.svg?style=flat-square&logo=python&logoColor=white)](https://pypi.org/project/win-folder-manager/)
 [![License](https://img.shields.io/github/license/LinJHS/win-folder-manager.svg?style=flat-square)](https://github.com/LinJHS/win-folder-manager/blob/main/LICENSE)
 
-**一个轻量级的、基于 Web 的 Windows 文件夹自定义工具（desktop.ini 管理器）。**
+**一个轻量级的、基于 Web 的 Windows 文件夹自定义工具。**
 
 [English Version](README_EN.md) | [Wiki](https://github.com/LinJHS/win-folder-manager/wiki) | [功能特性](#-功能特性) • [安装](#-安装) • [使用](#-使用) • [Docker](#-docker-支持) • [开发](#-开发)
 
@@ -16,7 +16,7 @@
 
 ---
 
-**Win Folder Manager** 允许您通过简洁的 Web 界面轻松自定义 Windows 文件夹，修改其 `desktop.ini` 文件。无需手动编辑隐藏的系统文件，即可设置自定义图标、别名（本地化名称）和提示信息。
+**Win Folder Manager** 允许您通过简洁的 Web 界面轻松自定义 Windows 文件夹。无需手动编辑隐藏的系统文件，即可设置自定义图标、别名（本地化名称）和提示信息。
 
 ## ✨ 功能特性
 
@@ -43,6 +43,11 @@ git clone https://github.com/LinJHS/win-folder-manager.git
 cd win-folder-manager
 pip install .
 ```
+
+> **注意**：如果您在 Linux 或 Docker 环境下开发，请使用 `requirements-docker.txt` 安装依赖，以避免 `pywin32` 安装失败：
+> ```bash
+> pip install -r requirements-docker.txt
+> ```
 
 ## 🚀 使用
 
