@@ -18,5 +18,5 @@ setup(
     include_package_data=True,
     install_requires=read_requirements(),
     python_requires='>=3.8',
-    entry_points={'console_scripts': ['win-folder-manager=manager.app:run']},
+    entry_points={'console_scripts': ['win-folder-manager=manager.app:main']},
 )
