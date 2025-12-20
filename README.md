@@ -28,7 +28,7 @@
 - 🚀 **Web 界面**：基于 Flask 的简单 UI，通过浏览器即可访问。
 - 💾 **持久化配置**：配置文件自动保存到 `%APPDATA%`，更新不丢失。
 
-## � 界面预览
+## 📸 界面预览
 
 | 管理主页 | 属性编辑 |
 | :---: | :---: |
@@ -36,7 +36,7 @@
 | **配置页面** | **资源管理器效果** |
 | <img src="imgs/01-configuration.png" width="100%"> | <img src="imgs/04-explorer-preview.png" width="100%"> |
 
-## �📦 安装
+## 📦 安装
 
 ### 通过 PyPI 安装 (推荐)
 
@@ -133,4 +133,4 @@ docker run -d \
 
 ## 📄 许可证
 
-本项目采用 MIT 许可证 - 详情请参阅 [LICENSE](LICENSE) 文件。
+本项目采用 GNU General Public License v3.0 许可证 - 详情请参阅 [LICENSE](LICENSE) 文件。

@@ -28,7 +28,7 @@
 - 🚀 **Web Interface**: Simple Flask-based UI accessible from your browser.
 - 💾 **Persistent Config**: Configuration saved automatically in `%APPDATA%`.
 
-## � Screenshots
+## 📸 Screenshots
 
 | Home Dashboard | Edit Attributes |
 | :---: | :---: |
@@ -36,7 +36,7 @@
 | **Configuration** | **Explorer Preview** |
 | <img src="imgs/01-configuration.png" width="100%"> | <img src="imgs/04-explorer-preview.png" width="100%"> |
 
-## �📦 Installation
+## 📦 Installation
 
 ### via PyPI (Recommended)
 
@@ -133,4 +133,4 @@ docker run -d \
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
