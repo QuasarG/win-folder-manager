@@ -3,7 +3,7 @@
 <div align="center">
 
 [![PyPI version](https://img.shields.io/pypi/v/win-folder-manager.svg?style=flat-square&logo=pypi&logoColor=white)](https://pypi.org/project/win-folder-manager/)
-[![Docker Pulls](https://img.shields.io/docker/pulls/linjhs/manager.svg?style=flat-square&logo=docker&logoColor=white)](https://hub.docker.com/r/linjhs/manager)
+[![Docker Pulls](https://img.shields.io/docker/pulls/linjhs/win-folder-manager.svg?style=flat-square&logo=docker&logoColor=white)](https://hub.docker.com/r/linjhs/win-folder-manager)
 [![Build Status](https://github.com/LinJHS/win-folder-manager/actions/workflows/publish.yml/badge.svg)](https://github.com/LinJHS/win-folder-manager/actions)
 [![Python Versions](https://img.shields.io/pypi/pyversions/win-folder-manager.svg?style=flat-square&logo=python&logoColor=white)](https://pypi.org/project/win-folder-manager/)
 [![License](https://img.shields.io/github/license/LinJHS/win-folder-manager.svg?style=flat-square)](https://github.com/LinJHS/win-folder-manager/blob/main/LICENSE)
@@ -99,7 +99,11 @@ win-folder-manager --no-browser
 您可以使用 Docker 运行 Win Folder Manager。
 
 ```bash
-docker run -d -p 6800:6800 -v /path/to/your/folders:/data linjhs/manager
+docker run -d \
+  -p 6800:6800 \
+  -v /path/to/your/folders:/data \
+  -v win-folder-manager-config:/root/.config/win-folder-manager \
+  linjhs/win-folder-manager
 ```
 
 > **注意**：本应用依赖 Windows 特有的命令 (`attrib`) 来设置文件夹属性（系统/隐藏/只读），这是 `desktop.ini` 自定义生效的必要条件。在 Linux 容器中运行可能会限制部分功能，除非用于特定环境或仅作查看用途。

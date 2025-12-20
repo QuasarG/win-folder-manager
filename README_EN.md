@@ -3,7 +3,7 @@
 <div align="center">
 
 [![PyPI version](https://img.shields.io/pypi/v/win-folder-manager.svg?style=flat-square&logo=pypi&logoColor=white)](https://pypi.org/project/win-folder-manager/)
-[![Docker Pulls](https://img.shields.io/docker/pulls/linjhs/manager.svg?style=flat-square&logo=docker&logoColor=white)](https://hub.docker.com/r/linjhs/manager)
+[![Docker Pulls](https://img.shields.io/docker/pulls/linjhs/win-folder-manager.svg?style=flat-square&logo=docker&logoColor=white)](https://hub.docker.com/r/linjhs/win-folder-manager)
 [![Build Status](https://github.com/LinJHS/win-folder-manager/actions/workflows/publish.yml/badge.svg)](https://github.com/LinJHS/win-folder-manager/actions)
 [![Python Versions](https://img.shields.io/pypi/pyversions/win-folder-manager.svg?style=flat-square&logo=python&logoColor=white)](https://pypi.org/project/win-folder-manager/)
 [![License](https://img.shields.io/github/license/LinJHS/win-folder-manager.svg?style=flat-square)](https://github.com/LinJHS/win-folder-manager/blob/main/LICENSE)
@@ -99,7 +99,11 @@ You can configure the root path to scan for folders directly in the Web UI.
 You can run Win Folder Manager using Docker.
 
 ```bash
-docker run -d -p 6800:6800 -v /path/to/your/folders:/data linjhs/manager
+docker run -d \
+  -p 6800:6800 \
+  -v /path/to/your/folders:/data \
+  -v win-folder-manager-config:/root/.config/win-folder-manager \
+  linjhs/win-folder-manager
 ```
 
 > **Note**: This application relies on Windows-specific commands (`attrib`) to set folder attributes (System/Hidden/ReadOnly) which are required for `desktop.ini` customizations to take effect. Running this in a Linux container may limit functionality unless used in a specific environment or for viewing purposes.
