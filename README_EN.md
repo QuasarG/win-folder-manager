@@ -1,0 +1,97 @@
+# Win Folder Manager
+
+<div align="center">
+
+[![PyPI version](https://img.shields.io/pypi/v/win-folder-manager.svg?style=flat-square&logo=pypi&logoColor=white)](https://pypi.org/project/win-folder-manager/)
+[![Docker Pulls](https://img.shields.io/docker/pulls/linjhs/manager.svg?style=flat-square&logo=docker&logoColor=white)](https://hub.docker.com/r/linjhs/manager)
+[![Build Status](https://github.com/LinJHS/win-folder-manager/actions/workflows/publish.yml/badge.svg)](https://github.com/LinJHS/win-folder-manager/actions)
+[![Python Versions](https://img.shields.io/pypi/pyversions/win-folder-manager.svg?style=flat-square&logo=python&logoColor=white)](https://pypi.org/project/win-folder-manager/)
+[![License](https://img.shields.io/github/license/LinJHS/win-folder-manager.svg?style=flat-square)](https://github.com/LinJHS/win-folder-manager/blob/main/LICENSE)
+
+**A lightweight, web-based manager for Windows folder customization.**
+
+[中文文档](README.md) | [Features](#-features) • [Installation](#-installation) • [Usage](#-usage) • [Docker](#-docker-support) • [Development](#-development)
+
+</div>
+
+---
+
+**Win Folder Manager** allows you to easily customize Windows folders by modifying their `desktop.ini` files through a clean Web UI. Set custom icons, aliases (localized names), and info tips without manually editing hidden system files.
+
+## ✨ Features
+
+- 🖼️ **Custom Icons**: Easily set folder icons (supports absolute and relative paths).
+- 🏷️ **Folder Aliases**: Rename folders visually in Explorer without changing the actual directory name.
+- ℹ️ **Info Tips**: Add custom hover text descriptions to folders.
+- 🔄 **Batch Operations**: Convert absolute icon paths to relative paths in batch for portability.
+- 📂 **Quick Actions**: Open folders in Explorer or CMD directly from the UI.
+- 🚀 **Web Interface**: Simple Flask-based UI accessible from your browser.
+- 💾 **Persistent Config**: Configuration saved automatically in `%APPDATA%`.
+
+## 📦 Installation
+
+### via PyPI (Recommended)
+
+```bash
+pip install win-folder-manager
+```
+
+### via Source
+
+```bash
+git clone https://github.com/LinJHS/win-folder-manager.git
+cd win-folder-manager
+pip install .
+```
+
+## 🚀 Usage
+
+Once installed, simply run:
+
+```bash
+win-folder-manager
+```
+
+Or using the python module directly:
+
+```bash
+python -m manager
+```
+
+The application will start a local web server (default: `http://127.0.0.1:6800`) and automatically open your default browser.
+
+### Configuration
+
+The configuration file is stored at:
+`%APPDATA%\win-folder-manager\config.json`
+
+You can configure the root path to scan for folders directly in the Web UI.
+
+## 🐳 Docker Support
+
+You can run Win Folder Manager using Docker.
+
+```bash
+docker run -d -p 6800:6800 -v /path/to/your/folders:/data linjhs/manager
+```
+
+> **Note**: This application relies on Windows-specific commands (`attrib`) to set folder attributes (System/Hidden/ReadOnly) which are required for `desktop.ini` customizations to take effect. Running this in a Linux container may limit functionality unless used in a specific environment or for viewing purposes.
+
+## 🛠️ Development
+
+1. Clone the repository
+   ```bash
+   git clone https://github.com/LinJHS/win-folder-manager.git
+   ```
+2. Install dependencies
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. Run locally
+   ```bash
+   python -m manager
+   ```
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

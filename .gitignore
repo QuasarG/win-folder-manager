@@ -1,0 +1,15 @@
+__pycache__
+
+.vscode/settings.json
+config.json
+dist/
+build/
+*.egg-info/
+.pytest_cache/
+.venv/
+.env
+.DS_Store
+
+# Packaging artifacts
+*.whl
+*.tar.gz
