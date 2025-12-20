@@ -44,6 +44,11 @@ cd win-folder-manager
 pip install .
 ```
 
+> **Note**: If you are developing on Linux or Docker, use `requirements-docker.txt` to avoid `pywin32` installation errors:
+> ```bash
+> pip install -r requirements-docker.txt
+> ```
+
 ## 🚀 Usage
 
 Once installed, simply run:

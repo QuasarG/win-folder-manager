@@ -16,6 +16,9 @@ class FolderManager:
         核心操作：设置文件为系统+隐藏，文件夹为只读。
         这是Windows识别自定义图标的必要条件。
         """
+        if os.name != 'nt':
+            return
+
         if os.path.exists(ini_path):
             subprocess.run(['attrib', '+s', '+h', ini_path], shell=True)
 
@@ -24,6 +27,9 @@ class FolderManager:
 
     def remove_attributes_before_write(self, ini_path):
         """写入前必须移除系统和隐藏属性，否则无法写入"""
+        if os.name != 'nt':
+            return
+
         if os.path.exists(ini_path):
             subprocess.run(['attrib', '-s', '-h', ini_path], shell=True)
 
