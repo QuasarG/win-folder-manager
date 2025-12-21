@@ -61,10 +61,16 @@ def handle_config():
 
 @app.route('/api/select_folder', methods=['POST'])
 def select_folder_dialog():
+    if os.name != 'nt':
+        return jsonify({"status": "error", "msg": "Folder selection is only supported on Windows."})
+
     try:
         import tkinter as tk
         from tkinter import filedialog
-        
+    except ImportError:
+        return jsonify({"status": "error", "msg": "Tkinter module not found. Please ensure Python is installed with tcl/tk support."})
+
+    try:
         # Create a hidden root window
         root = tk.Tk()
         root.withdraw() # Hide the main window
