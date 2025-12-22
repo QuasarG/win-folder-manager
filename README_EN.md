@@ -3,6 +3,7 @@
 <div align="center">
 
 [![PyPI version](https://img.shields.io/pypi/v/win-folder-manager.svg?style=flat-square&logo=pypi&logoColor=white)](https://pypi.org/project/win-folder-manager/)
+[![PyPI Downloads](https://img.shields.io/pypi/dm/win-folder-manager.svg?style=flat-square&logo=pypi&logoColor=white)](https://pypi.org/project/win-folder-manager/)
 [![Docker Pulls](https://img.shields.io/docker/pulls/linjhs/win-folder-manager.svg?style=flat-square&logo=docker&logoColor=white)](https://hub.docker.com/r/linjhs/win-folder-manager)
 [![Build Status](https://github.com/LinJHS/win-folder-manager/actions/workflows/publish.yml/badge.svg)](https://github.com/LinJHS/win-folder-manager/actions)
 [![Python Versions](https://img.shields.io/pypi/pyversions/win-folder-manager.svg?style=flat-square&logo=python&logoColor=white)](https://pypi.org/project/win-folder-manager/)
@@ -29,6 +30,10 @@
 - 💾 **Persistent Config**: Configuration saved automatically in `%APPDATA%`.
 
 ## 📸 Screenshots
+
+> **Core Concept**: The physical path remains unchanged (English), but displays as a localized alias (Chinese) in Explorer.
+> 
+> <img src="imgs/00-concept.png" width="100%">
 
 | Home Dashboard | Edit Attributes |
 | :---: | :---: |
