@@ -3,6 +3,7 @@
 <div align="center">
 
 [![PyPI version](https://img.shields.io/pypi/v/win-folder-manager.svg?style=flat-square&logo=pypi&logoColor=white)](https://pypi.org/project/win-folder-manager/)
+[![PyPI Downloads](https://img.shields.io/pypi/dm/win-folder-manager.svg?style=flat-square&logo=pypi&logoColor=white)](https://pypi.org/project/win-folder-manager/)
 [![Docker Pulls](https://img.shields.io/docker/pulls/linjhs/win-folder-manager.svg?style=flat-square&logo=docker&logoColor=white)](https://hub.docker.com/r/linjhs/win-folder-manager)
 [![Build Status](https://github.com/LinJHS/win-folder-manager/actions/workflows/publish.yml/badge.svg)](https://github.com/LinJHS/win-folder-manager/actions)
 [![Python Versions](https://img.shields.io/pypi/pyversions/win-folder-manager.svg?style=flat-square&logo=python&logoColor=white)](https://pypi.org/project/win-folder-manager/)
@@ -29,6 +30,10 @@
 - 💾 **持久化配置**：配置文件自动保存到 `%APPDATA%`，更新不丢失。
 
 ## 📸 界面预览
+
+> **核心功能展示**：物理路径保持不变（英文），但在资源管理器中显示为中文别名。
+> 
+> <img src="imgs/00-concept.png" width="100%">
 
 | 管理主页 | 属性编辑 |
 | :---: | :---: |
