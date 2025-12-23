@@ -51,9 +51,33 @@ folder_logic = FolderManager(CONFIG_FILE)
 
 def load_config():
     if not os.path.exists(CONFIG_FILE):
-        return {"root_path": "", "icons": []}
+        return {
+            "root_path": "",
+            "icons": [],
+            "ai_config": {
+                "enabled": False,
+                "api_base": "https://api.openai.com/v1",
+                "api_key": "",
+                "model": "gpt-3.5-turbo"
+            }
+        }
     with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
-        return json.load(f)
+        config = json.load(f)
+
+    # 向后兼容：确保 ai_config 字段存在
+    if 'ai_config' not in config:
+        config['ai_config'] = {
+            "enabled": False,
+            "api_base": "https://api.openai.com/v1",
+            "api_key": "",
+            "model": "gpt-3.5-turbo"
+        }
+
+    # 确保 emoji_cache_dir 字段存在
+    if 'emoji_cache_dir' not in config and config.get('root_path'):
+        config['emoji_cache_dir'] = os.path.join(config['root_path'], '.emoji_icons')
+
+    return config
 
 
 def save_config(data):
@@ -179,6 +203,101 @@ def batch_relative():
             )
             count += 1
     return jsonify({"status": "success", "count": count})
+
+
+@app.route('/api/ai_generate', methods=['POST'])
+def ai_generate():
+    """AI 生成别名和 Emoji"""
+    from .ai_service import AINamingService
+
+    data = request.json
+    folder_name = data.get('folder_name', '')
+    ai_config = data.get('ai_config', {})
+
+    if not folder_name:
+        return jsonify({"status": "error", "msg": "文件夹名称不能为空"}), 400
+
+    try:
+        service = AINamingService(ai_config)
+        result = service.generate(folder_name)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"status": "error", "msg": str(e)}), 500
+
+
+@app.route('/api/emoji_to_ico', methods=['POST'])
+def emoji_to_ico():
+    """将 Emoji 转换为 .ico 文件"""
+    from .emoji_converter import EmojiConverter
+
+    data = request.json
+    emoji = data.get('emoji', '')
+    folder_path = data.get('folder_path', '')
+
+    if not emoji or not folder_path:
+        return jsonify({"status": "error", "msg": "参数不完整"}), 400
+
+    try:
+        config = load_config()
+        cache_dir = config.get('emoji_cache_dir')
+
+        converter = EmojiConverter(cache_dir)
+        ico_path = converter.convert(emoji, folder_path)
+
+        return jsonify({"status": "success", "ico_path": ico_path})
+    except Exception as e:
+        return jsonify({"status": "error", "msg": str(e)}), 500
+
+
+@app.route('/api/batch_ai_generate', methods=['POST'])
+def batch_ai_generate():
+    """批量 AI 生成文件夹别名"""
+    from .ai_service import AINamingService
+    from .emoji_converter import EmojiConverter
+
+    data = request.json
+    ai_config = data.get('ai_config', {})
+
+    try:
+        config = load_config()
+        root = config.get('root_path', '')
+        cache_dir = config.get('emoji_cache_dir')
+
+        if not root:
+            return jsonify({"status": "error", "msg": "根目录未配置"}), 400
+
+        folders = folder_logic.scan_folders(root)
+        service = AINamingService(ai_config)
+        converter = EmojiConverter(cache_dir)
+
+        count = 0
+        errors = []
+
+        for folder in folders:
+            try:
+                # 只处理没有别名的文件夹
+                if not folder.get('alias'):
+                    result = service.generate(folder['name'])
+                    if result['status'] == 'success':
+                        ico_path = converter.convert(result['emoji'], folder['path'])
+                        folder_logic.update_folder(
+                            folder['path'],
+                            result['alias'],
+                            ico_path,
+                            result.get('infotip', ''),
+                            use_relative=True
+                        )
+                        count += 1
+            except Exception as e:
+                errors.append(f"{folder['name']}: {str(e)}")
+
+        return jsonify({
+            "status": "success",
+            "count": count,
+            "errors": errors
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "msg": str(e)}), 500
 
 
 def open_browser(port):

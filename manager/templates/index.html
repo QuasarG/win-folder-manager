@@ -38,6 +38,11 @@
         <div class="card shadow-sm mb-4">
             <div class="card-body py-2">
                 <div class="d-flex gap-2">
+                    <button v-if="config.ai_config?.enabled" class="btn btn-info btn-sm" @click="batchAiGenerate" :disabled="batchAiGenerating">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span v-if="batchAiGenerating">批量生成中...</span>
+                        <span v-else>AI 批量生成</span>
+                    </button>
                     <button class="btn btn-warning btn-sm" @click="batchRelativeToAll">
                         <i class="fa-solid fa-link"></i> 全部转为相对路径
                     </button>
@@ -79,6 +84,13 @@
                             </td>
                             <td class="text-end">
                                 <div class="btn-group btn-group-sm">
+                                    <button v-if="config.ai_config?.enabled" class="btn btn-info"
+                                            @click="aiQuickGenerate(folder)"
+                                            :disabled="aiGenerating[folder.path]">
+                                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                        <span v-if="aiGenerating[folder.path]">生成中...</span>
+                                        <span v-else>AI 生成</span>
+                                    </button>
                                     <button class="btn btn-primary" @click="editFolder(folder)">
                                         <i class="fa-solid fa-pen"></i> 编辑
                                     </button>
@@ -178,6 +190,48 @@
                             </tbody>
                         </table>
                         <button class="btn btn-outline-primary btn-sm" @click="addIcon">+ 添加新图标</button>
+
+                        <label class="form-label fw-bold mt-4">
+                            <i class="fa-solid fa-robot text-primary"></i> AI 自动命名配置
+                        </label>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" v-model="config.ai_config.enabled" id="aiEnabled">
+                            <label class="form-check-label" for="aiEnabled">
+                                启用 AI 自动生成功能
+                            </label>
+                        </div>
+
+                        <div v-if="config.ai_config.enabled">
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <label class="form-label small text-muted">API Base</label>
+                                    <input type="text" class="form-control form-control-sm"
+                                           v-model="config.ai_config.api_base"
+                                           placeholder="https://api.openai.com/v1">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small text-muted">API Key</label>
+                                    <div class="input-group input-group-sm">
+                                        <input :type="showApiKey ? 'text' : 'password'"
+                                               class="form-control"
+                                               v-model="config.ai_config.api_key"
+                                               placeholder="sk-xxxxxxxxxxxx">
+                                        <button class="btn btn-outline-secondary" @click="showApiKey = !showApiKey">
+                                            <i :class="showApiKey ? 'fa-eye-slash' : 'fa-eye'"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small text-muted">模型</label>
+                                    <select class="form-select form-select-sm" v-model="config.ai_config.model">
+                                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                                        <option value="gpt-4">GPT-4</option>
+                                        <option value="deepseek-chat">DeepSeek Chat</option>
+                                        <option value="deepseek-coder">DeepSeek Coder</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-primary" @click="saveConfig">保存设置</button>
@@ -206,7 +260,16 @@
             },
             data() {
                 return {
-                    config: { root_path: '', icons: [] },
+                    config: {
+                        root_path: '',
+                        icons: [],
+                        ai_config: {  // AI 配置
+                            enabled: false,
+                            api_base: 'https://api.openai.com/v1',
+                            api_key: '',
+                            model: 'gpt-3.5-turbo'
+                        }
+                    },
                     folders: [],
                     currentFolder: {},
                     editForm: {
@@ -219,7 +282,10 @@
                     modals: {
                         edit: null,
                         config: null
-                    }
+                    },
+                    showApiKey: false,      // 控制 API Key 显示/隐藏
+                    aiGenerating: {},       // 记录每个文件夹的 AI 生成状态
+                    batchAiGenerating: false // 批量 AI 生成状态
                 }
             },
             mounted() {
@@ -350,6 +416,77 @@
                     });
                     
                     return found ? found.name : '';
+                },
+
+                // AI 生成方法
+                async aiQuickGenerate(folder) {
+                    if (!this.config.ai_config?.api_key) {
+                        alert('请先在设置中配置 API Key');
+                        return;
+                    }
+
+                    // Vue 3 直接赋值即可
+                    this.aiGenerating[folder.path] = true;
+                    try {
+                        const res = await axios.post('/api/ai_generate', {
+                            folder_name: folder.name,
+                            ai_config: this.config.ai_config
+                        });
+
+                        if (res.data.status === 'success') {
+                            const iconRes = await axios.post('/api/emoji_to_ico', {
+                                emoji: res.data.emoji,
+                                folder_path: folder.path
+                            });
+
+                            await axios.post('/api/update', {
+                                path: folder.path,
+                                alias: res.data.alias,
+                                infotip: res.data.infotip,
+                                icon_path: iconRes.data.ico_path,
+                                use_relative: true
+                            });
+
+                            await this.refreshFolders();
+                        } else {
+                            alert('AI 生成失败: ' + res.data.msg);
+                        }
+                    } catch (e) {
+                        alert('请求失败: ' + (e.response?.data?.msg || e.message));
+                    } finally {
+                        this.aiGenerating[folder.path] = false;
+                    }
+                },
+
+                async batchAiGenerate() {
+                    if (!this.config.ai_config?.api_key) {
+                        alert('请先在设置中配置 API Key');
+                        return;
+                    }
+
+                    if (!confirm('确定要 AI 批量生成所有未命名文件夹吗？')) return;
+
+                    this.batchAiGenerating = true;
+                    try {
+                        const res = await axios.post('/api/batch_ai_generate', {
+                            ai_config: this.config.ai_config
+                        });
+
+                        if (res.data.status === 'success') {
+                            let msg = `成功处理 ${res.data.count} 个文件夹`;
+                            if (res.data.errors.length > 0) {
+                                msg += `\n失败 ${res.data.errors.length} 个:\n` + res.data.errors.slice(0, 3).join('\n');
+                            }
+                            alert(msg);
+                            await this.refreshFolders();
+                        } else {
+                            alert('批量生成失败: ' + res.data.msg);
+                        }
+                    } catch (e) {
+                        alert('请求失败: ' + (e.response?.data?.msg || e.message));
+                    } finally {
+                        this.batchAiGenerating = false;
+                    }
                 }
             }
         }).mount('#app');
