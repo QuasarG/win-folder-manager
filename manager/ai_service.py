@@ -6,6 +6,7 @@ AI 命名服务 - 兼容 OpenAI API 格式
 
 import requests
 import json
+import re
 
 
 class AINamingService:
@@ -80,7 +81,7 @@ class AINamingService:
                 {"role": "user", "content": self._build_prompt(folder_name)}
             ],
             "temperature": 0.7,
-            "max_tokens": 200
+            "max_tokens": 2000
         }
 
         try:
@@ -88,15 +89,45 @@ class AINamingService:
             response.raise_for_status()
 
             result = response.json()
+            
+            # 调试日志：打印完整 API 响应
+            print(f"API Response: {json.dumps(result, ensure_ascii=False)}")
+
+            if 'choices' not in result or len(result['choices']) == 0:
+                raise Exception("API 返回了空的选择列表 (choices is empty)")
+
             content = result['choices'][0]['message']['content'].strip()
+            
+            if not content:
+                raise Exception("AI 返回的内容为空 (content is empty)")
 
-            # 尝试提取 JSON（处理可能的 markdown 代码块）
-            if '```json' in content:
-                content = content.split('```json')[1].split('```')[0].strip()
-            elif '```' in content:
-                content = content.split('```')[1].split('```')[0].strip()
-
-            ai_result = json.loads(content)
+            # 更加强健的 JSON 提取逻辑
+            json_str = content
+            
+            # 1. 优先尝试提取 markdown 代码块中的 JSON
+            code_block_match = re.search(r"```(?:json)?\s*(\{[\s\S]*?\})\s*```", content, re.IGNORECASE)
+            if code_block_match:
+                json_str = code_block_match.group(1)
+            else:
+                # 2. 如果没有代码块，尝试提取最外层的 {} 包裹的内容
+                brace_match = re.search(r"\{[\s\S]*\}", content)
+                if brace_match:
+                    json_str = brace_match.group(0)
+            
+            # 3. 尝试解析
+            try:
+                ai_result = json.loads(json_str)
+            except json.JSONDecodeError:
+                # 4. 容错处理：尝试清理常见的 JSON 格式错误（如尾部逗号）
+                try:
+                    # 去除对象末尾多余的逗号
+                    fixed_json = re.sub(r",\s*\}", "}", json_str)
+                    fixed_json = re.sub(r",\s*\]", "]", fixed_json)
+                    ai_result = json.loads(fixed_json)
+                except Exception:
+                    # 记录原始返回内容以便调试
+                    print(f"JSON Parse Error. Raw content: {content}")
+                    raise Exception("AI 返回的不是有效 JSON，请检查日志或重试")
 
             return {
                 "status": "success",

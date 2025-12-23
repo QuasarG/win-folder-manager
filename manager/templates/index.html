@@ -13,6 +13,8 @@
         .folder-row:hover { background-color: #e9ecef; }
         .icon-preview { width: 24px; height: 24px; display: inline-block; vertical-align: middle; margin-right: 8px; }
         .badge-soft { background-color: #e7f1ff; color: #0d6efd; border: 1px solid #cff4fc;}
+        .btn-ai { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); color: white !important; border: none; }
+        .btn-ai:hover { background: linear-gradient(135deg, #4f46e5 0%, #9333ea 100%); color: white !important; }
         /* 增加 loading 遮罩层样式 */
         [v-cloak] { display: none; }
     </style>
@@ -38,7 +40,7 @@
         <div class="card shadow-sm mb-4">
             <div class="card-body py-2">
                 <div class="d-flex gap-2">
-                    <button v-if="config.ai_config?.enabled" class="btn btn-info btn-sm" @click="batchAiGenerate" :disabled="batchAiGenerating">
+                    <button v-if="config.ai_config?.enabled" class="btn btn-ai btn-sm" @click="batchAiGenerate" :disabled="batchAiGenerating">
                         <i class="fa-solid fa-wand-magic-sparkles"></i>
                         <span v-if="batchAiGenerating">批量生成中...</span>
                         <span v-else>AI 批量生成</span>
@@ -84,7 +86,7 @@
                             </td>
                             <td class="text-end">
                                 <div class="btn-group btn-group-sm">
-                                    <button v-if="config.ai_config?.enabled" class="btn btn-info"
+                                    <button v-if="config.ai_config?.enabled" class="btn btn-ai"
                                             @click="aiQuickGenerate(folder)"
                                             :disabled="aiGenerating[folder.path]">
                                         <i class="fa-solid fa-wand-magic-sparkles"></i>
@@ -172,7 +174,7 @@
                             </div>
                         </div>
 
-                        <div class="mb-4">
+                        <div class="mb-4" v-if="config.ai_config?.enabled">
                             <label class="form-label fw-bold">Emoji 缓存模式</label>
                             <div class="d-flex gap-3 mb-2">
                                 <div class="form-check">
