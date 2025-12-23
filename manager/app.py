@@ -1,5 +1,6 @@
 import os
 import json
+import time
 import webbrowser
 from threading import Timer
 from flask import Flask, render_template, jsonify, request
@@ -50,32 +51,116 @@ folder_logic = FolderManager(CONFIG_FILE)
 
 
 def load_config():
+    default_ai_config = {
+        "enabled": True,
+        "active_provider": "SiliconFlow",
+        "providers": [
+            {
+                "name": "SiliconFlow",
+                "api_base": "https://api.siliconflow.cn/v1",
+                "api_key": "",
+                "model": "deepseek-ai/DeepSeek-V3.2",
+                "models": ["deepseek-ai/DeepSeek-V3.2", "google/gemma-3-9b-it", "qwen/qwen3-7b-chat"]
+            },
+            {
+                "name": "DeepSeek",
+                "api_base": "https://api.deepseek.com",
+                "api_key": "",
+                "model": "deepseek-chat",
+                "models": ["deepseek-chat"]
+            },
+            {
+                "name": "Zhipu",
+                "api_base": "https://open.bigmodel.cn/api/paas/v4",
+                "api_key": "",
+                "model": "glm-4.7-flash",
+                "models": ["glm-4.7-flash", "glm-4v-flash"]
+            },
+            {
+                "name": "OpenAI",
+                "api_base": "https://api.openai.com/v1",
+                "api_key": "",
+                "model": "gpt-5-nano",
+                "models": ["gpt-5-nano", "gpt-5-mini", "gpt-4o-mini"]
+            },
+            {
+                "name": "Anthropic",
+                "api_base": "https://api.anthropic.com/v1",
+                "api_key": "",
+                "model": "claude-4.5-haiku",
+                "models": ["claude-4.5-haiku", "claude-3.5-haiku"]
+            },
+            {
+                "name": "Google",
+                "api_base": "https://generativelanguage.googleapis.com/v1beta",
+                "api_key": "",
+                "model": "gemini-3-flash",
+                "models": ["gemini-3-flash", "gemini-2.5-flash-lite"]
+            },
+            {
+                "name": "Groq",
+                "api_base": "https://api.groq.com/openai/v1",
+                "api_key": "",
+                "model": "llama-4-maverick",
+                "models": ["llama-4-maverick", "llama-3.1-8b-instant"]
+            },
+            {
+                "name": "OpenRouter",
+                "api_base": "https://openrouter.ai/api/v1",
+                "api_key": "",
+                "model": "openai/gpt-4o-mini",
+                "models": ["openai/gpt-5-nano", "openai/gpt-5-mini", "openai/gpt-4o-mini", "anthropic/claude-3.5-sonnet", "google/gemini-flash-1.5", "deepseek/deepseek-chat"]
+            },
+            {
+                "name": "Alibaba-Qwen",
+                "api_base": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+                "api_key": "",
+                "model": "qwen3-8b-instruct",
+                "models": ["qwen3-8b-instruct", "qwen-turbo-latest", "qwen3-omni-flash"]
+            }
+        ]
+    }
+
     if not os.path.exists(CONFIG_FILE):
         return {
             "root_path": "",
             "icons": [],
-            "ai_config": {
-                "enabled": False,
-                "api_base": "https://api.openai.com/v1",
-                "api_key": "",
-                "model": "gpt-3.5-turbo"
-            }
+            "ai_config": default_ai_config
         }
-    with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
-        config = json.load(f)
 
-    # 向后兼容：确保 ai_config 字段存在
+    try:
+        with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+    except Exception:
+        return {
+            "root_path": "",
+            "icons": [],
+            "ai_config": default_ai_config
+        }
+
+    # 确保 ai_config 字段存在
     if 'ai_config' not in config:
-        config['ai_config'] = {
-            "enabled": False,
-            "api_base": "https://api.openai.com/v1",
-            "api_key": "",
-            "model": "gpt-3.5-turbo"
-        }
+        config['ai_config'] = default_ai_config
+    else:
+        # 检查 ai_config 内部字段，如果缺失则使用默认值填充
+        ai_config = config['ai_config']
+        if 'providers' not in ai_config or not ai_config['providers']:
+            ai_config['providers'] = default_ai_config['providers']
+        if 'active_provider' not in ai_config:
+            ai_config['active_provider'] = default_ai_config['active_provider']
 
-    # 确保 emoji_cache_dir 字段存在
-    if 'emoji_cache_dir' not in config and config.get('root_path'):
-        config['emoji_cache_dir'] = os.path.join(config['root_path'], '.emoji_icons')
+    # Emoji 配置初始化
+    if 'emoji_save_mode' not in config:
+        # 模式: 'global' (全局目录) 或 'relative' (根目录下相对目录)
+        config['emoji_save_mode'] = 'global'
+
+    if 'emoji_global_dir' not in config:
+        # 使用默认
+        config['emoji_global_dir'] = os.path.join(APPDATA_DIR, 'emoji_cache')
+
+    if 'emoji_relative_name' not in config:
+        # 相对模式下的文件夹名称
+        config['emoji_relative_name'] = '.emoji_cache'
 
     return config
 
@@ -212,13 +297,30 @@ def ai_generate():
 
     data = request.json
     folder_name = data.get('folder_name', '')
-    ai_config = data.get('ai_config', {})
+    
+    # 从服务端加载配置，不再依赖前端传来的敏感信息
+    config = load_config()
+    ai_config = config.get('ai_config', {})
+    
+    if not ai_config.get('enabled'):
+        return jsonify({"status": "error", "msg": "AI 功能未启用"}), 400
+
+    # 获取当前激活的提供商配置
+    active_name = ai_config.get('active_provider')
+    provider_config = None
+    for p in ai_config.get('providers', []):
+        if p['name'] == active_name:
+            provider_config = p
+            break
+            
+    if not provider_config:
+        return jsonify({"status": "error", "msg": "未找到有效的 AI 提供商配置"}), 400
 
     if not folder_name:
         return jsonify({"status": "error", "msg": "文件夹名称不能为空"}), 400
 
     try:
-        service = AINamingService(ai_config)
+        service = AINamingService(provider_config)
         result = service.generate(folder_name)
         return jsonify(result)
     except Exception as e:
@@ -239,7 +341,20 @@ def emoji_to_ico():
 
     try:
         config = load_config()
-        cache_dir = config.get('emoji_cache_dir')
+        
+        # 确定缓存目录
+        mode = config.get('emoji_save_mode', 'global')
+        if mode == 'relative':
+            # 相对模式：需要知道根目录
+            root = config.get('root_path', '')
+            if root:
+                cache_dir = os.path.join(root, config.get('emoji_relative_name', '.emoji_cache'))
+            else:
+                # 如果没有根目录（理论上不应发生），回退到全局或 None
+                cache_dir = config.get('emoji_global_dir')
+        else:
+            # 全局模式
+            cache_dir = config.get('emoji_global_dir')
 
         converter = EmojiConverter(cache_dir)
         ico_path = converter.convert(emoji, folder_path)
@@ -256,45 +371,82 @@ def batch_ai_generate():
     from .emoji_converter import EmojiConverter
 
     data = request.json
-    ai_config = data.get('ai_config', {})
+    
+    # 速率限制配置
+    batch_size = data.get('batch_size', 5)      # 默认每批处理 5 个
+    delay = data.get('delay', 2.0)              # 默认间隔 2 秒
 
     try:
         config = load_config()
         root = config.get('root_path', '')
-        cache_dir = config.get('emoji_cache_dir')
+        
+        # 确定缓存目录
+        mode = config.get('emoji_save_mode', 'global')
+        if mode == 'relative':
+            if root:
+                cache_dir = os.path.join(root, config.get('emoji_relative_name', '.emoji_cache'))
+            else:
+                cache_dir = config.get('emoji_global_dir')
+        else:
+            cache_dir = config.get('emoji_global_dir')
+            
+        ai_config = config.get('ai_config', {})
 
         if not root:
             return jsonify({"status": "error", "msg": "根目录未配置"}), 400
+            
+        if not ai_config.get('enabled'):
+            return jsonify({"status": "error", "msg": "AI 功能未启用"}), 400
+
+        # 获取当前激活的提供商配置
+        active_name = ai_config.get('active_provider')
+        provider_config = None
+        for p in ai_config.get('providers', []):
+            if p['name'] == active_name:
+                provider_config = p
+                break
+        
+        if not provider_config:
+            return jsonify({"status": "error", "msg": "未找到有效的 AI 提供商配置"}), 400
 
         folders = folder_logic.scan_folders(root)
-        service = AINamingService(ai_config)
+        service = AINamingService(provider_config)
         converter = EmojiConverter(cache_dir)
 
         count = 0
         errors = []
+        
+        # 筛选出需要处理的文件夹
+        targets = [f for f in folders if not f.get('alias')]
+        
+        # 应用批次限制
+        targets = targets[:batch_size]
 
-        for folder in folders:
+        for i, folder in enumerate(targets):
             try:
-                # 只处理没有别名的文件夹
-                if not folder.get('alias'):
-                    result = service.generate(folder['name'])
-                    if result['status'] == 'success':
-                        ico_path = converter.convert(result['emoji'], folder['path'])
-                        folder_logic.update_folder(
-                            folder['path'],
-                            result['alias'],
-                            ico_path,
-                            result.get('infotip', ''),
-                            use_relative=True
-                        )
-                        count += 1
+                # 请求节流：除第一个请求外，每次请求前等待
+                if i > 0:
+                    time.sleep(delay)
+                    
+                result = service.generate(folder['name'])
+                if result['status'] == 'success':
+                    ico_path = converter.convert(result['emoji'], folder['path'])
+                    folder_logic.update_folder(
+                        folder['path'],
+                        result['alias'],
+                        ico_path,
+                        result.get('infotip', ''),
+                        use_relative=True
+                    )
+                    count += 1
             except Exception as e:
                 errors.append(f"{folder['name']}: {str(e)}")
 
         return jsonify({
             "status": "success",
             "count": count,
-            "errors": errors
+            "errors": errors,
+            "has_more": len([f for f in folders if not f.get('alias')]) > 0
         })
     except Exception as e:
         return jsonify({"status": "error", "msg": str(e)}), 500

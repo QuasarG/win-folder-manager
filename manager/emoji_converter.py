@@ -87,6 +87,10 @@ class EmojiConverter:
         Returns:
             ico_path: 生成的 .ico 文件绝对路径
         """
+        # Input validation
+        if not emoji or not isinstance(emoji, str) or not emoji.strip():
+            raise ValueError("Invalid emoji input: must be a non-empty string")
+
         # 生成文件名（使用 emoji 的 Unicode 码点或哈希值）
         if len(emoji) == 1:
             # 单字符 emoji，直接用 Unicode 码点
